@@ -21,6 +21,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    // SOOP 방송국 메인 페이지 및 게시판 데이터 요청
     const response = await axios.get(`https://bj.sooplive.co.kr/${bj_id}`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -30,13 +31,34 @@ export default async function handler(req, res) {
 
     const $ = cheerio.load(response.data);
 
-    // 방송국 정보 파싱
-    const broadcasterName = $('.bj_name').text().trim() || '빡쏘 방송국';
-    
-    // 임시 공지 데이터 (추후 상세 파싱 확장 가능)
-    const notices = [
-      { title: 'SOOP 버츄얼 스트리머 빡쏘 방송국에 오신 것을 환영합니다! 🎉', date: '2026-03-01' }
-    ];
+    // 방송국 이름
+    const broadcasterName = $('.bj_name').text().trim() || '빡쏘';
+
+    // 최신 공지글 긁어오기 (SOOP 방송국 메인 공지 요소 파싱)
+    const notices = [];
+    $('.post_list li, .notice_list li, #notice_list li').each((i, el) => {
+      if (i >= 5) return; // 최신 5개만
+      const title = $(el).find('a').text().trim();
+      const link = $(el).find('a').attr('href');
+      const date = $(el).find('.date, .time').text().trim();
+
+      if (title) {
+        notices.push({
+          title,
+          url: link ? (link.startsWith('http') ? link : `https://bj.sooplive.co.kr${link}`) : `https://bj.sooplive.co.kr/${bj_id}`,
+          date: date || '최신'
+        });
+      }
+    });
+
+    // 만약 파싱된 공지가 없을 경우 방송국 메인 공지 링크 제공
+    if (notices.length === 0) {
+      notices.push({
+        title: '📢 빡쏘 방송국 최신 공지사항 바로가기',
+        url: `https://www.sooplive.com/station/${bj_id}/board`,
+        date: 'SOOP 이동'
+      });
+    }
 
     const result = {
       bj_id,
