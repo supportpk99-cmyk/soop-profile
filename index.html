@@ -16,11 +16,18 @@
     <!-- 상단 프로필 헤더 -->
     <div class="w-full max-w-3xl bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-burgundy">
         <div class="flex items-center space-x-4">
-            <div class="w-20 h-20 bg-burgundy rounded-full flex items-center justify-center text-xl font-bold">
+            <div class="relative w-20 h-20 rounded-full bg-burgundy flex items-center justify-center text-xl font-bold border-2 border-burgundy">
                 빡쏘
+                <!-- 방송 중 라이브 뱃지 -->
+                <span id="live-badge" class="hidden absolute -bottom-1 -right-1 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                    ON AIR
+                </span>
             </div>
             <div>
-                <h1 id="bj-title" class="text-2xl font-bold">로딩 중...</h1>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-2xl font-bold">빡쏘</h1>
+                    <span id="live-status-text" class="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-400 font-semibold">오프라인</span>
+                </div>
                 <p class="text-gray-400 text-sm mt-1">도파민에 살고 죽는 버츄얼 스트리머 빡쏘</p>
                 <a href="https://www.sooplive.com/station/soyoung6056" target="_blank" class="inline-block mt-3 text-xs bg-burgundy px-3 py-1.5 rounded-lg text-white font-semibold hover:opacity-90 transition">
                     SOOP 방송국 바로가기 ↗
@@ -34,76 +41,97 @@
         
         <!-- 1. 방송 공지 -->
         <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">📢 방송 공지</h2>
-            <div id="notice-box" class="text-sm text-gray-300 space-y-2">
-                <p class="text-gray-400">공지사항을 불러오는 중...</p>
+            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">📢 최신 공지</h2>
+            <div id="notice-box" class="space-y-2 text-sm text-gray-300">
+                <p class="text-gray-500 animate-pulse">공지사항을 불러오는 중...</p>
             </div>
         </div>
 
         <!-- 2. 방송 일정 -->
         <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
             <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">📅 방송 일정</h2>
-            <div id="schedule-box" class="text-sm text-gray-300 space-y-2">
-                <p class="text-gray-400">일정을 불러오는 중...</p>
+            <div id="schedule-box" class="space-y-2 text-sm text-gray-300">
+                <div class="p-3 bg-gray-900 rounded-lg border border-gray-700">
+                    <p class="font-semibold text-burgundy">정기 라이브 방송</p>
+                    <p class="text-xs text-gray-400 mt-1">저녁 시간대 진행 (상세 변경사항은 방송국 공지 참조)</p>
+                </div>
             </div>
         </div>
 
         <!-- 3. 다시보기 -->
         <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">📺 다시보기</h2>
-            <div id="vod-box" class="text-sm text-gray-300">
-                <p class="text-gray-400">최신 다시보기 목록 연동 예정</p>
+            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">📺 최근 다시보기</h2>
+            <div id="vod-box" class="space-y-2 text-sm text-gray-300">
+                <p class="text-gray-500 animate-pulse">다시보기를 불러오는 중...</p>
             </div>
         </div>
 
         <!-- 4. 클립 -->
         <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">🎬 클립</h2>
-            <div id="clip-box" class="text-sm text-gray-300">
-                <p class="text-gray-400">하이라이트 클립 목록 연동 예정</p>
+            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">🎬 하이라이트 클립</h2>
+            <div id="clip-box" class="space-y-2 text-sm text-gray-300">
+                <p class="text-gray-500 animate-pulse">클립을 불러오는 중...</p>
             </div>
         </div>
 
     </div>
 
     <script>
-        const bjId = 'soyoung6056';
+        const BJ_ID = 'soyoung6056';
 
-        fetch(`/api/soop?bj_id=${bjId}`)
-            .then(res => res.json())
-            .then(response => {
-                if (response.data) {
-                    const info = response.data;
-                    document.getElementById('bj-title').innerText = info.broadcasterName || '빡쏘';
-                    
-                    // 공지 렌더링
-                    if (info.notices && info.notices.length > 0) {
-                        const noticeHtml = info.notices.map(n => `
-                            <a href="${n.url}" target="_blank" class="block p-3 bg-gray-900 rounded-lg border border-gray-700 hover:border-burgundy transition">
-                                <p class="font-medium text-gray-200 text-sm truncate">${n.title}</p>
-                                <span class="text-xs text-gray-500 mt-1 block">${n.date}</span>
-                            </a>
-                        `).join('');
-                        document.getElementById('notice-box').innerHTML = noticeHtml;
-                    }
+        // 1. 방송국 기본 정보 및 최신 게시글(공지) 불러오기
+        async function loadStationData() {
+            try {
+                // 브라우저에서 직접 전달받는 프락시 및 SOOP 엔드포인트 호출
+                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://bjapi.sooplive.co.kr/api/' + BJ_ID + '/station')}`);
+                const data = await res.json();
+                const stationData = JSON.parse(data.contents);
 
-                    // 일정 렌더링
-                    if (info.schedules && info.schedules.length > 0) {
-                        const scheduleHtml = info.schedules.map(s => `
-                            <div class="p-3 bg-gray-900 rounded-lg border border-gray-700">
-                                <p class="font-medium text-burgundy text-sm">${s.day}</p>
-                                <p class="text-gray-300 text-xs mt-1">${s.time}</p>
-                                <p class="text-gray-400 text-xs mt-0.5">${s.desc}</p>
-                            </div>
-                        `).join('');
-                        document.getElementById('schedule-box').innerHTML = scheduleHtml;
-                    }
+                // 라이브 방송 여부 체크
+                if (stationData.broad && stationData.broad.broad_no) {
+                    document.getElementById('live-badge').classList.remove('hidden');
+                    const statusText = document.getElementById('live-status-text');
+                    statusText.innerText = '● LIVE 방송 중';
+                    statusText.className = 'text-xs px-2 py-0.5 rounded bg-red-600 text-white font-bold animate-pulse';
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById('bj-title').innerText = '빡쏘 방송국';
-            });
+
+                // 최신 게시글(공지) 출력
+                const noticeBox = document.getElementById('notice-box');
+                if (stationData.post && stationData.post.length > 0) {
+                    noticeBox.innerHTML = stationData.post.slice(0, 3).map(post => `
+                        <a href="https://www.sooplive.com/station/${BJ_ID}/post/${post.title_no}" target="_blank" class="block p-3 bg-gray-900 rounded-lg border border-gray-700 hover:border-burgundy transition">
+                            <p class="font-medium text-gray-200 text-sm truncate">${post.title_name}</p>
+                            <span class="text-xs text-gray-500 mt-1 block">${post.reg_date || '최신'}</span>
+                        </a>
+                    `).join('');
+                } else {
+                    noticeBox.innerHTML = `<a href="https://www.sooplive.com/station/${BJ_ID}/board" target="_blank" class="block p-3 bg-gray-900 rounded-lg border border-gray-700 text-center text-sm text-gray-300 hover:border-burgundy">📢 SOOP 방송국 공지 게시판 가기 ↗</a>`;
+                }
+            } catch (e) {
+                document.getElementById('notice-box').innerHTML = `<a href="https://www.sooplive.com/station/${BJ_ID}/board" target="_blank" class="block p-3 bg-gray-900 rounded-lg border border-gray-700 text-center text-sm text-gray-300 hover:border-burgundy">📢 SOOP 방송국 공지 바로가기 ↗</a>`;
+            }
+        }
+
+        // 2. 다시보기 (VOD) 및 클립 직행 목록 세팅
+        function loadMediaLinks() {
+            document.getElementById('vod-box').innerHTML = `
+                <a href="https://www.sooplive.com/station/${BJ_ID}/vod" target="_blank" class="block p-3 bg-gray-900 rounded-lg border border-gray-700 hover:border-burgundy transition">
+                    <p class="font-medium text-gray-200 text-sm">▶ 빡쏘 최신 다시보기 (VOD) 전체보기</p>
+                    <span class="text-xs text-gray-500 mt-1 block">SOOP VOD 목록으로 직행</span>
+                </a>
+            `;
+
+            document.getElementById('clip-box').innerHTML = `
+                <a href="https://www.sooplive.com/station/${BJ_ID}/clip" target="_blank" class="block p-3 bg-gray-900 rounded-lg border border-gray-700 hover:border-burgundy transition">
+                    <p class="font-medium text-gray-200 text-sm">✂ 빡쏘 인기 하이라이트 클립</p>
+                    <span class="text-xs text-gray-500 mt-1 block">SOOP 클립 모음으로 직행</span>
+                </a>
+            `;
+        }
+
+        // 초기 실행
+        loadStationData();
+        loadMediaLinks();
     </script>
 </body>
 </html>
