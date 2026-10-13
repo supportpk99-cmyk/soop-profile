@@ -43,8 +43,8 @@
         <!-- 2. 방송 일정 -->
         <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
             <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">📅 방송 일정</h2>
-            <div id="schedule-box" class="text-sm text-gray-300">
-                <p class="text-gray-400">등록된 방송 일정이 없습니다.</p>
+            <div id="schedule-box" class="text-sm text-gray-300 space-y-2">
+                <p class="text-gray-400">일정을 불러오는 중...</p>
             </div>
         </div>
 
@@ -76,7 +76,7 @@
                     const info = response.data;
                     document.getElementById('bj-title').innerText = info.broadcasterName || '빡쏘';
                     
-                    // 공지목록 출력
+                    // 공지 렌더링
                     if (info.notices && info.notices.length > 0) {
                         const noticeHtml = info.notices.map(n => `
                             <a href="${n.url}" target="_blank" class="block p-3 bg-gray-900 rounded-lg border border-gray-700 hover:border-burgundy transition">
@@ -85,6 +85,18 @@
                             </a>
                         `).join('');
                         document.getElementById('notice-box').innerHTML = noticeHtml;
+                    }
+
+                    // 일정 렌더링
+                    if (info.schedules && info.schedules.length > 0) {
+                        const scheduleHtml = info.schedules.map(s => `
+                            <div class="p-3 bg-gray-900 rounded-lg border border-gray-700">
+                                <p class="font-medium text-burgundy text-sm">${s.day}</p>
+                                <p class="text-gray-300 text-xs mt-1">${s.time}</p>
+                                <p class="text-gray-400 text-xs mt-0.5">${s.desc}</p>
+                            </div>
+                        `).join('');
+                        document.getElementById('schedule-box').innerHTML = scheduleHtml;
                     }
                 }
             })

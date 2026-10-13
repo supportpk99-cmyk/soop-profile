@@ -21,7 +21,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // SOOP 방송국 메인 페이지 및 게시판 데이터 요청
     const response = await axios.get(`https://bj.sooplive.co.kr/${bj_id}`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -30,18 +29,15 @@ export default async function handler(req, res) {
     });
 
     const $ = cheerio.load(response.data);
-
-    // 방송국 이름
     const broadcasterName = $('.bj_name').text().trim() || '빡쏘';
 
-    // 최신 공지글 긁어오기 (SOOP 방송국 메인 공지 요소 파싱)
+    // 공지 파싱
     const notices = [];
     $('.post_list li, .notice_list li, #notice_list li').each((i, el) => {
-      if (i >= 5) return; // 최신 5개만
+      if (i >= 3) return;
       const title = $(el).find('a').text().trim();
       const link = $(el).find('a').attr('href');
       const date = $(el).find('.date, .time').text().trim();
-
       if (title) {
         notices.push({
           title,
@@ -51,7 +47,6 @@ export default async function handler(req, res) {
       }
     });
 
-    // 만약 파싱된 공지가 없을 경우 방송국 메인 공지 링크 제공
     if (notices.length === 0) {
       notices.push({
         title: '📢 빡쏘 방송국 최신 공지사항 바로가기',
@@ -60,10 +55,16 @@ export default async function handler(req, res) {
       });
     }
 
+    // 방송 일정 데이터 (SOOP 일정 페이지 또는 고정 안내 링크 제공)
+    const schedules = [
+      { day: '매주 정기 방송', time: '저녁 시간대 (방송국 공지 참조)', desc: '도파민 충전 라이브 진행!' }
+    ];
+
     const result = {
       bj_id,
       broadcasterName,
       notices,
+      schedules,
       updatedAt: new Date().toISOString()
     };
 
