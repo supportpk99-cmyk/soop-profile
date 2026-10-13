@@ -1,13 +1,11 @@
--<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>빡쏘 방송국 프로필</title>
-    <!-- Tailwind CSS CDN (빠르고 예쁜 디자인 적용) -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* 버건디 시그니처 테마 컬러 */
         .bg-burgundy { background-color: #6b1d2f; }
         .text-burgundy { color: #6b1d2f; }
         .border-burgundy { border-color: #6b1d2f; }
@@ -16,40 +14,61 @@
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center p-6">
 
     <!-- 상단 프로필 헤더 -->
-    <div class="w-full max-w-2xl bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-burgundy">
+    <div class="w-full max-w-3xl bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-burgundy">
         <div class="flex items-center space-x-4">
-            <div class="w-20 h-20 bg-burgundy rounded-full flex items-center justify-center text-2xl font-bold">
+            <div class="w-20 h-20 bg-burgundy rounded-full flex items-center justify-center text-xl font-bold">
                 빡쏘
             </div>
             <div>
                 <h1 id="bj-title" class="text-2xl font-bold">로딩 중...</h1>
                 <p class="text-gray-400 text-sm mt-1">도파민에 살고 죽는 버츄얼 스트리머 빡쏘</p>
+                <a href="https://www.sooplive.com/station/soyoung6056" target="_blank" class="inline-block mt-3 text-xs bg-burgundy px-3 py-1.5 rounded-lg text-white font-semibold hover:opacity-90 transition">
+                    SOOP 방송국 바로가기 ↗
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- 메인 컨텐츠 영역 (공지 및 일정) -->
-    <div class="w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- 방송 공지 -->
+    <!-- 메인 컨텐츠 영역 (요청 순서: 공지 -> 일정 -> 다시보기 -> 클립) -->
+    <div class="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- 1. 방송 공지 -->
         <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-            <h2 class="text-lg font-semibold mb-3 text-burgundy">📢 방송 공지</h2>
-            <div id="notice-box" class="text-sm text-gray-300">
-                데이터를 불러오는 중입니다...
+            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center"><span>📢 방송 공지</span></h2>
+            <div id="notice-box" class="text-sm text-gray-300 space-y-2">
+                <p class="text-gray-400">공지사항을 불러오는 중...</p>
             </div>
         </div>
 
-        <!-- 방송 일정 (캘린더) -->
+        <!-- 2. 방송 일정 -->
         <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-            <h2 class="text-lg font-semibold mb-3 text-burgundy">📅 방송 일정</h2>
+            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center"><span>📅 방송 일정</span></h2>
             <div id="schedule-box" class="text-sm text-gray-300">
-                등록된 일정이 없습니다.
+                <p class="text-gray-400">등록된 방송 일정이 없습니다.</p>
             </div>
         </div>
+
+        <!-- 3. 다시보기 -->
+        <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
+            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center"><span>📺 다시보기</span></h2>
+            <div id="vod-box" class="text-sm text-gray-300">
+                <p class="text-gray-400">최신 다시보기 목록을 연동할 예정입니다.</p>
+            </div>
+        </div>
+
+        <!-- 4. 클립 -->
+        <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
+            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center"><span>🎬 클립</span></h2>
+            <div id="clip-box" class="text-sm text-gray-300">
+                <p class="text-gray-400">하이라이트 클립 목록을 연동할 예정입니다.</p>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // 백엔드 API에서 데이터 불러오기 (본인 SOOP ID 입력)
-        const bjId = 'soop_id_here'; // 나중에 본인 SOOP 아이디로 수정 가능
+        // 본인 SOOP ID 반영
+        const bjId = 'soyoung6056';
 
         fetch(`/api/soop?bj_id=${bjId}`)
             .then(res => res.json())
@@ -57,13 +76,22 @@
                 if (response.data) {
                     const info = response.data;
                     document.getElementById('bj-title').innerText = info.broadcasterName || '빡쏘 방송국';
-                    document.getElementById('notice-box').innerText = '최신 공지 데이터를 연동하는 중입니다.';
+                    
+                    // 공지 렌더링
+                    if (info.notices && info.notices.length > 0) {
+                        const noticeHtml = info.notices.map(n => `
+                            <div class="p-2 bg-gray-900 rounded-lg border border-gray-700">
+                                <p class="font-medium text-gray-200">${n.title}</p>
+                                <span class="text-xs text-gray-500">${n.date}</span>
+                            </div>
+                        `).join('');
+                        document.getElementById('notice-box').innerHTML = noticeHtml;
+                    }
                 }
             })
             .catch(err => {
                 console.error(err);
                 document.getElementById('bj-title').innerText = '빡쏘 방송국';
-                document.getElementById('notice-box').innerText = '데이터를 불러오지 못했습니다.';
             });
     </script>
 </body>
