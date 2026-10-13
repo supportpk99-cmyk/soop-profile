@@ -29,12 +29,12 @@
         </div>
     </div>
 
-    <!-- 메인 컨텐츠 영역 (요청 순서: 공지 -> 일정 -> 다시보기 -> 클립) -->
+    <!-- 메인 컨텐츠 영역 (공지 -> 일정 -> 다시보기 -> 클립) -->
     <div class="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-6">
         
         <!-- 1. 방송 공지 -->
         <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center"><span>📢 방송 공지</span></h2>
+            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">📢 방송 공지</h2>
             <div id="notice-box" class="text-sm text-gray-300 space-y-2">
                 <p class="text-gray-400">공지사항을 불러오는 중...</p>
             </div>
@@ -42,7 +42,7 @@
 
         <!-- 2. 방송 일정 -->
         <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center"><span>📅 방송 일정</span></h2>
+            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">📅 방송 일정</h2>
             <div id="schedule-box" class="text-sm text-gray-300">
                 <p class="text-gray-400">등록된 방송 일정이 없습니다.</p>
             </div>
@@ -50,24 +50,23 @@
 
         <!-- 3. 다시보기 -->
         <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center"><span>📺 다시보기</span></h2>
+            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">📺 다시보기</h2>
             <div id="vod-box" class="text-sm text-gray-300">
-                <p class="text-gray-400">최신 다시보기 목록을 연동할 예정입니다.</p>
+                <p class="text-gray-400">최신 다시보기 목록 연동 예정</p>
             </div>
         </div>
 
         <!-- 4. 클립 -->
         <div class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center"><span>🎬 클립</span></h2>
+            <h2 class="text-lg font-semibold mb-3 text-burgundy flex items-center">🎬 클립</h2>
             <div id="clip-box" class="text-sm text-gray-300">
-                <p class="text-gray-400">하이라이트 클립 목록을 연동할 예정입니다.</p>
+                <p class="text-gray-400">하이라이트 클립 목록 연동 예정</p>
             </div>
         </div>
 
     </div>
 
     <script>
-        // 본인 SOOP ID 반영
         const bjId = 'soyoung6056';
 
         fetch(`/api/soop?bj_id=${bjId}`)
@@ -75,15 +74,15 @@
             .then(response => {
                 if (response.data) {
                     const info = response.data;
-                    document.getElementById('bj-title').innerText = info.broadcasterName || '빡쏘 방송국';
+                    document.getElementById('bj-title').innerText = info.broadcasterName || '빡쏘';
                     
-                    // 공지 렌더링
+                    // 공지목록 출력
                     if (info.notices && info.notices.length > 0) {
                         const noticeHtml = info.notices.map(n => `
-                            <div class="p-2 bg-gray-900 rounded-lg border border-gray-700">
-                                <p class="font-medium text-gray-200">${n.title}</p>
-                                <span class="text-xs text-gray-500">${n.date}</span>
-                            </div>
+                            <a href="${n.url}" target="_blank" class="block p-3 bg-gray-900 rounded-lg border border-gray-700 hover:border-burgundy transition">
+                                <p class="font-medium text-gray-200 text-sm truncate">${n.title}</p>
+                                <span class="text-xs text-gray-500 mt-1 block">${n.date}</span>
+                            </a>
                         `).join('');
                         document.getElementById('notice-box').innerHTML = noticeHtml;
                     }
